@@ -315,7 +315,7 @@ const DataItem = ({ icon: Icon, label, value }) => (
     </div>
   </div>
 );
-
+// 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
 const StreamCard = ({
   stream,
   setLoading,
@@ -569,7 +569,7 @@ const FindStream = () => {
           <div className="relative">
             <input
               type="text"
-              placeholder="Enter Stream ID or Sender Address"
+              placeholder="Enter Stream ID (Ex: Try to find 1)"
               value={query}
               onChange={handleInputChange}
               className="w-full px-4 py-3 pl-11 rounded-lg bg-gray-800/50 text-white border border-gray-700/50 focus:border-blue-500/50 focus:outline-none focus:ring-2 focus:ring-blue-500/20 transition-all duration-200 backdrop-blur-sm"
