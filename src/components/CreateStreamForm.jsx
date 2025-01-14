@@ -4,6 +4,8 @@ import { createStream } from "../api/api";
 import { useWallet } from "../hooks/useWallet";
 import { contractInstance } from "../services/contract";
 import toast from "react-hot-toast";
+import isEmpty from "is-empty";
+import { Link, useNavigate } from "react-router-dom";
 
 const InputGroup = ({ icon: Icon, label, error, children }) => (
   <div className="space-y-2">
@@ -26,6 +28,8 @@ const InputGroup = ({ icon: Icon, label, error, children }) => (
 const CreateStreamForm = () => {
   const [loading, setLoading] = useState(false);
   const { signer, contract } = useWallet();
+
+  const navigate = useNavigate();
 
   const [formData, setFormData] = useState({
     sender: "",
@@ -91,13 +95,14 @@ const CreateStreamForm = () => {
       const { sender, token, recipient, amount, ratePerSecond } = streamData;
       const debtContract = contractInstance(contract);
 
-      const { status } = await debtContract.createStream(
+      const { status, message, streamId } = await debtContract.createStream(
         sender,
         recipient,
         ratePerSecond,
         token,
         true,
-        amount
+        amount,
+        signer
       );
       if (status) {
         toast.success("Stream created successfully!");
@@ -108,6 +113,9 @@ const CreateStreamForm = () => {
           amount: "",
           ratePerSecond: "",
         });
+        navigate(`/streams?query=${streamId}`);
+      } else if (!isEmpty(message)) {
+        toast.error(message);
       } else {
         toast.error("Failed to create stream. Please try again.");
       }
@@ -132,8 +140,11 @@ const CreateStreamForm = () => {
         <h2 className="text-2xl font-semibold text-white mb-6">
           Create New Stream
         </h2>
-
-        <form onSubmit={handleSubmit} className="space-y-6">
+        <Link to="/how-it-works">
+          Don't know how to create a stream ?
+          <span className="text-blue-500"> Read here </span>
+        </Link>
+        <form onSubmit={handleSubmit} className="space-y-6 mt-5">
           <InputGroup icon={Send} label="Sender Address" error={errors.sender}>
             <input
               type="text"
@@ -189,7 +200,7 @@ const CreateStreamForm = () => {
 
           <InputGroup
             icon={Activity}
-            label="Rate Per Second (Calculated)"
+            label="Rate Per Second"
             error={errors.ratePerSecond}
           >
             <input

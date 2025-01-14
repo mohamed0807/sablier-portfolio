@@ -1,7 +1,5 @@
 import isEmpty from "is-empty";
 import {
-  ArrowRight,
-  Ban,
   Clock,
   CreditCard,
   Download,
@@ -10,7 +8,6 @@ import {
   Pen,
   Power,
   Search,
-  SquarePen,
   User,
   User2,
   Wallet,
@@ -24,12 +21,6 @@ import toast from "react-hot-toast";
 import { useSearchParams } from "react-router-dom";
 import { useWallet } from "../hooks/useWallet";
 import { contractInstance } from "../services/contract";
-import {
-  Dialog,
-  DialogClose,
-  DialogContent,
-  DialogTitle,
-} from "@radix-ui/react-dialog";
 
 const formatAmount = (amount, decimals) => {
   return amount / Math.pow(10, decimals);
@@ -87,7 +78,8 @@ const handleTransaction = async (
   stream,
   walletAddress,
   formData,
-  handleSearch
+  handleSearch,
+  signer
 ) => {
   try {
     let response;
@@ -99,7 +91,9 @@ const handleTransaction = async (
         streamId,
         formData.amount,
         stream[2],
-        walletAddress
+        walletAddress,
+        stream[7],
+        signer
       );
     } else if (actionType === "void") {
       response = await debtContract.void(streamId, stream[2], walletAddress);
@@ -331,6 +325,7 @@ const StreamCard = ({
   loading,
   address,
   handleSearch,
+  signer,
 }) => {
   const [modalOpen, setModalOpen] = useState(false);
   const [currentAction, setCurrentAction] = useState(null);
@@ -349,7 +344,8 @@ const StreamCard = ({
         stream,
         address,
         formData,
-        handleSearch
+        handleSearch,
+        signer
       );
     } catch (err) {
       console.error("Error in action handler:", err);
@@ -459,7 +455,7 @@ const StreamCard = ({
       <div className="grid grid-cols-2 gap-6">
         <div className="space-y-4">
           <DataItem icon={User} label="Sender" value={stream[2]} />
-          <DataItem icon={User2} label="Recipient" value={stream[7]} />
+          <DataItem icon={User2} label="Recipient" value={stream[10]} />
           <DataItem
             icon={Wallet}
             label="Amount"
@@ -467,6 +463,8 @@ const StreamCard = ({
           />
         </div>
         <div className="space-y-4">
+          <DataItem icon={User2} label="Token" value={stream[7]} />
+
           <DataItem
             icon={CreditCard}
             label="Rate Per Second"
@@ -533,12 +531,12 @@ const FindStream = () => {
       if (data.length === 0) {
         setError("Stream not found.");
       } else {
-        data = data.map((item) => {
-          if (typeof item === "bigint") {
-            return item.toString();
-          }
-          return item;
-        });
+        // data = data.map((item) => {
+        //   if (typeof item === "bigint") {
+        //     return item.toString();
+        //   }
+        //   return item;
+        // });
         setStreams(data);
       }
       // console.log("DATA", data.length, data[0]);
@@ -624,6 +622,7 @@ const FindStream = () => {
               stream={streams}
               setLoading={setActionLoading}
               setError={setError}
+              signer={signer}
             />
           </div>
         ) : query ? (

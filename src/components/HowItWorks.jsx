@@ -43,7 +43,7 @@ const HowItWorks = () => {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center">
             <h6 className="text-3xl font-bold text-gray-900 dark:text-white sm:text-3xl md:text-3xl">
-              How Flow Works
+              What is it about
             </h6>
             <p className="mt-6 mx-auto text-xl text-gray-500 dark:text-gray-400">
               Flow allows you to send and receive funds continuously in
@@ -59,41 +59,104 @@ const HowItWorks = () => {
       {/* How It Works Steps */}
       <div className="bg-white dark:bg-gray-800 py-5 mt-12">
         <h2 className="text-3xl font-bold text-center mb-5 text-gray-900 dark:text-white">
-          Stream Guide
+          How It Works
         </h2>
         <div className=" mx-auto px-4 sm:px-6 lg:px-8">
           <div className="max-w-1xl mx-auto space-y-7">
             <StepCard
               number="1"
               title="Create a Stream"
-              description="
-              Creating stream is simple you just have to have a some sepolia ERC20 token, then approve 
-              Set up your payment stream by specifying the amount, recipient, and payment rate (RPS). No upfront deposit required!"
+              description={
+                <div>
+                  Setting up a payment stream is simple! Here's what you need:
+                  <br />
+                  <br />
+                  <ul>
+                    <li>
+                      <strong>Sepolia ERC20 Token</strong> and{" "}
+                      <strong>ETH</strong> (for transaction fees) in your
+                      wallet.
+                    </li>
+                    <li>
+                      <strong>Sender</strong>: The person who owes the debt.
+                    </li>
+                    <li>
+                      <strong>Token Address</strong>: The ERC20 token you want
+                      to send as payment.
+                    </li>
+                    <li>
+                      <strong>Recipient</strong>: The person who will receive
+                      the debt payments.
+                    </li>
+                    <li>
+                      <strong>Amount</strong>: The total debt amount to be paid.
+                    </li>
+                    <li>
+                      <strong>Rate Per Second</strong>: The rate at which the
+                      recipient will collect the debt. For example, if user A
+                      wants to pay 10 USDC per day to user B, the rate per
+                      second will be calculated as:
+                      <br />
+                      <code>
+                        Rate per second = 10 USDC / 86400 seconds =
+                        0.00011574074 USDC per second
+                      </code>
+                    </li>
+                  </ul>
+                  No need to approve the contract for your token—our platform
+                  handles it for you. Plus, there's no upfront deposit required!
+                </div>
+              }
             />
             <StepCard
               number="2"
               title="Deposit Funds"
-              description="Add funds to your stream to start transferring payments to the recipient. The funds will be transferred continuously based on the set RPS."
+              description={
+                <div>
+                  Add funds to your stream to start transferring payments to the
+                  recipient. The funds will be transferred continuously based on
+                  the set RPS.
+                  <br />
+                  <br />
+                  For example: you never have to worry about depositing more
+                  funds than you owe per day, because the recipient can only
+                  withdraw what they are owed per day.
+                </div>
+              }
             />
             <StepCard
               number="3"
               title="Pause the Stream"
-              description="You can pause the stream at any time. This will temporarily stop the payments from flowing until you restart it."
+              description="You (Sender or Recipient) can pause the stream at any time. This will temporarily stop the payments from flowing until you restart it."
             />
             <StepCard
               number="4"
               title="Adjust Rate Per Second (RPS)"
-              description="Modify the Rate Per Second (RPS) to increase or decrease the speed of payments at any point during the stream."
+              description={
+                <div>
+                  Modify the Rate Per Second (RPS) to increase or decrease the
+                  speed of payments at any point during the stream.
+                  <br />
+                  <br />
+                  <strong>Note:</strong> This will determine how much the
+                  recipient can collect from their debt payment per day.
+                  <br />
+                  <br />
+                  For example, if you set the Rate Per Second to 1 USDC, then
+                  the recipient will be able to collect 86400 (1 day in seconds)
+                  USDC per day.
+                </div>
+              }
             />
             <StepCard
               number="5"
-              title="Monitor & Withdraw"
-              description="Track the flow of funds in real-time and withdraw funds as a recipient, or modify the stream settings as a sender."
+              title="Withdraw"
+              description="The recipient is the only person able to withdraw funds from the stream. You can withdraw funds at any time. Even if you forgot to withdraw an earlier payment, you can collect it with the current payment."
             />
             <StepCard
               number="6"
               title="Restart the Stream"
-              description="If the stream was paused, you can restart it and continue transferring funds as originally planned."
+              description="Anyone (sender or recipient) can restart the stream at any time. If the stream was paused, you can restart it and continue transferring funds as originally planned."
             />
             <StepCard
               number="7"
@@ -102,14 +165,6 @@ const HowItWorks = () => {
             />
           </div>
         </div>
-      </div>
-
-      {/* CTA Section */}
-      <div className="flex items-center justify-center my-12">
-        <Button size="lg" variant="secondary">
-          Launch App
-          <ArrowRight className="ml-2 h-4 w-4" />
-        </Button>
       </div>
     </div>
   );

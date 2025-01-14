@@ -1,4 +1,8 @@
 import { ethers } from "ethers";
+
+import ABI_ERC20 from "../config/contracts/ERC20.json";
+const CONTRACT_ADDRESS = import.meta.env.VITE_CONTRACT_ADDRESS;
+
 //  const parsedEvent = this.contract.interface.parseLog(createFlowStreamEvent);
 const findEvent = (receipt, eventName, contract) => {
   const eventData = receipt.logs.find((log) => {
@@ -36,7 +40,20 @@ export class SablierService {
 
   async getStreamById(streamId) {
     try {
-      return await this.contract.getStream(streamId);
+      let data = await this.contract.getStream(streamId);
+      if (data.length === 0) {
+        return [];
+      } else {
+        data = data.map((item) => {
+          if (typeof item === "bigint") {
+            return item.toString();
+          }
+          return item;
+        });
+        const recipient = await this.contract.getRecipient(streamId);
+        data.push(recipient);
+        return data;
+      }
     } catch (error) {
       console.log("Error fetching stream:", error);
       return [];
@@ -58,7 +75,8 @@ export class SablierService {
     ratePerSecond,
     tokenAddress,
     transferable,
-    amount
+    amount,
+    signer
   ) {
     try {
       const tokenAmount = ethers.parseUnits(amount.toString(), 18);
@@ -66,6 +84,21 @@ export class SablierService {
         ratePerSecond.toString(),
         18
       );
+
+      const tokenContract = new ethers.Contract(
+        tokenAddress,
+        ABI_ERC20,
+        signer
+      );
+
+      const gasBufferMultiplier = 1.2;
+
+      const approvalTx = await tokenContract.approve(
+        CONTRACT_ADDRESS,
+        tokenAmount
+      );
+      await approvalTx.wait();
+      console.log(`Token approval successful: ${approvalTx.hash}`);
 
       const gasEstimate = await this.contract.createAndDeposit.estimateGas(
         sender,
@@ -76,11 +109,8 @@ export class SablierService {
         tokenAmount
       );
 
-      const multiplier = 11n;
-      const divisor = 10n;
-
-      const finalGasPrice = Math.floor(
-        Number((gasEstimate * multiplier) / divisor)
+      const finalGasLimit = Math.floor(
+        Number(gasEstimate) * gasBufferMultiplier
       );
 
       const tx = await this.contract.createAndDeposit(
@@ -91,13 +121,13 @@ export class SablierService {
         transferable,
         tokenAmount,
         {
-          gasLimit: finalGasPrice,
+          gasLimit: finalGasLimit,
         }
       );
 
       const receipt = await tx.wait();
 
-      if (receipt.status == 1) {
+      if (receipt.status === 1) {
         const createFlowStreamEvent = this.contract.interface.parseLog({
           topics: receipt.logs[2].topics,
           data: receipt.logs[2].data,
@@ -107,14 +137,25 @@ export class SablierService {
           streamId: createFlowStreamEvent.args[0],
         };
       } else {
-        return { status: false };
+        console.log("Transaction failed. No stream created.");
+        return {
+          status: false,
+          message: "Transaction failed. No stream created",
+        };
       }
     } catch (error) {
-      console.log(
-        "Error creating stream:",
-        error?.response?.data?.message || error?.message
-      );
-      return { status: false };
+      console.log("Error creating stream:", error?.message || error);
+      let message = error?.response?.data?.message || error?.message;
+      if (error.code === ethers.errors.UNPREDICTABLE_GAS_LIMIT) {
+        console.log(
+          "Gas estimation issue. Verify contract and function parameters."
+        );
+        message = "Something went wrong";
+      } else if (error.code === ethers.errors.INSUFFICIENT_FUNDS) {
+        console.log("Insufficient funds in wallet for transaction.");
+        message = "Insufficient funds in wallet for transaction";
+      }
+      return { status: false, message };
     }
   }
 
@@ -282,16 +323,24 @@ export class SablierService {
     }
   }
 
-  async deposit(streamId, amount, sender, walletAddress) {
+  async deposit(streamId, amount, sender, walletAddress, tokenAddress, signer) {
     try {
       if (sender !== walletAddress) {
-        return { status: false, message: "Only the recipient can withdraw" };
+        return { status: false, message: "Only the recipient can deposit" };
       }
       amount = ethers.parseUnits(amount.toString(), 18);
 
-      const recipient = await this.contract.getRecipient(streamId);
+      const tokenContract = new ethers.Contract(
+        tokenAddress,
+        ABI_ERC20,
+        signer
+      );
 
-      console.log("recipient", recipient);
+      const approvalTx = await tokenContract.approve(CONTRACT_ADDRESS, amount);
+      await approvalTx.wait();
+      console.log(`Token approval successful: ${approvalTx.hash}`);
+
+      const recipient = await this.contract.getRecipient(streamId);
 
       const gasEstimate = await this.contract.deposit.estimateGas(
         streamId,
@@ -299,6 +348,7 @@ export class SablierService {
         sender,
         recipient
       );
+
       const multiplier = 11n;
       const divisor = 10n;
 
@@ -330,7 +380,18 @@ export class SablierService {
         "Error Voiding Stream:",
         error?.response?.data?.message || error?.message
       );
-      return { status: false };
+      console.log("Error depositing stream:", error?.message || error);
+      let message = error?.response?.data?.message || error?.message;
+      if (error.code === ethers.errors.UNPREDICTABLE_GAS_LIMIT) {
+        console.log(
+          "Gas estimation issue. Verify contract and function parameters."
+        );
+        message = "Something went wrong";
+      } else if (error.code === ethers.errors.INSUFFICIENT_FUNDS) {
+        console.log("Insufficient funds in wallet for transaction.");
+        message = "Insufficient funds in wallet for transaction";
+      }
+      return { status: false, message };
     }
   }
 
